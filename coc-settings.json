@@ -98,7 +98,6 @@
 		"o": ["wait", "expanded?", "collapse", "expand"],
 		"O": "open:tab",
 		"t": "open:tab",
-		"n": "collapse",
 		"l": "gotoParent",
 		"yp": "copyFilepath",
 		"yn": "copyFilename",

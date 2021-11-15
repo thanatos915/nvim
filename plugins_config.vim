@@ -1,8 +1,9 @@
 """"""""""""""""""""""""""""""
-" => Plugins Autoload 
+" => Plugins Autoload
 """"""""""""""""""""""""""""""
 call plug#begin('$XDG_CONFIG_HOME/nvim/plugged')
 
+Plug 'mileszs/ack.vim'
 Plug 'phpactor/phpactor' ,  {'do': 'composer install', 'for': 'php'}
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
@@ -41,12 +42,19 @@ Plug 'yuezk/vim-js', { 'for': ['vim-plug', 'php', 'html', 'javascript', 'css', '
 Plug 'junegunn/goyo.vim'
 
 " Auto Code
-Plug 'ludovicchabant/vim-gutentags'
+"Plug 'ludovicchabant/vim-gutentags'
 
 " Include Phpactor
 Plug 'ncm2/ncm2'
 Plug 'roxma/nvim-yarp'
 Plug 'phpactor/ncm2-phpactor'
+" Git
+Plug 'tpope/vim-fugitive'
+
+" comment
+Plug 'preservim/nerdcommenter'
+" editor config
+Plug 'editorconfig/editorconfig-vim'
 
 call plug#end()
 
@@ -86,12 +94,12 @@ endfunction
 inoremap <silent><expr> <c-space> coc#refresh()
 inoremap <silent><expr> <c-o> coc#refresh()
 function! Show_documentation()
-	call CocActionAsync('highlight')
-	if (index(['vim','help'], &filetype) >= 0)
-		execute 'h '.expand('<cword>')
-	else
-		call CocAction('doHover')
-	endif
+call CocActionAsync('highlight')
+if (index(['vim','help'], &filetype) >= 0)
+    execute 'h '.expand('<cword>')
+else
+    call CocAction('doHover')
+endif
 endfunction
 nnoremap <LEADER>h :call Show_documentation()<CR>
 " set runtimepath^=~/.config/nvim/coc-extensions/coc-flutter-tools/
@@ -154,11 +162,26 @@ set rtp+=/usr/bin/fzf
 function! s:find_git_root()
   return system('git rev-parse --show-toplevel 2> /dev/null')[:-2]
 endfunction
-
 command! ProjectFiles execute 'Files' s:find_git_root()
+
+"command! -bang -nargs=* PRg
+"  \ call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case ".shellescape(<q-args>), 1, fzf#vim#with_preview({'dir': system('git rev-parse --show-toplevel 2> /dev/null')[:-2]}), <bang>0)
+"
+
+function! RipgrepFzf(query, fullscreen)
+  let command_fmt = 'rg --column --line-number --no-heading --color=always --smart-case -- %s || true'
+  let initial_command = printf(command_fmt, shellescape(a:query))
+  let reload_command = printf(command_fmt, '{q}')
+  let spec = {'options': ['--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command], 'dir': system('git rev-parse --show-toplevel 2> /dev/null')[:-2]}
+  call fzf#vim#grep(initial_command, 1, fzf#vim#with_preview(spec), a:fullscreen)
+endfunction
+
+command! -nargs=* -bang PRG call RipgrepFzf(<q-args>, <bang>0)
+
 nnoremap <leader>ff :Leaderf file<CR>
 noremap <silent> <C-p> :ProjectFiles<CR>
 noremap <silent> <C-f> :Rg<CR>
+noremap <leader>rg :PRG<CR>
 noremap <silent> <C-e> :History<CR>
 noremap <leader>bt :BTags<CR>
 noremap <leader>fl :Lines<CR>
@@ -167,6 +190,7 @@ noremap <leader>; :History:<CR>
 
 let g:fzf_preview_window = 'right:60%'
 let g:fzf_commits_log_options = '--graph --color=always --format="%C(auto)%h%d %s %C(black)%C(bold)%cr"'
+let g:fzf_history_dir = '~/.local/share/fzf-history'
 
 function! s:list_buffers()
   redir => list
@@ -187,7 +211,15 @@ command! BD call fzf#run(fzf#wrap({
 
 noremap <c-d> :BD<CR>
 
-let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.8 } }
+"let g:fzf_layout = { 'reverse': { 'width': 0.9, 'height': 0.8 } }
+"let g:fzf_layout = { '': '60%' }
+let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.9, 'relative': v:true  } }
+
+" This is the default extra key bindings
+let g:fzf_action = {
+  \ 'ctrl-t': 'tab split',
+  \ 'alt-x': 'split',
+  \ 'alt-v': 'vsplit' }
 
 " ===
 " === Leaderf
@@ -297,23 +329,23 @@ map <LEADER>gy :Goyo<CR>
 " ===
 " === Gutentags
 " ===
-let g:gutentags_enabled = 1
+" let g:gutentags_enabled = 1
 " gutentags搜索工程目录的标志，碰到这些文件/目录名就停止向上一级目录递归 "
-let g:gutentags_project_root = ['.root', '.svn', '.git', '.project']
-" 所生成的数据文件的名称 
-let g:gutentags_ctags_tagfile = '.tags'
+" let g:gutentags_project_root = ['.root', '.svn', '.git', '.project']
+" 所生成的数据文件的名称
+" let g:gutentags_ctags_tagfile = '.tags'
 " 将自动生成的 tags 文件全部放入 ~/.cache/tags 目录中，避免污染工程目录 "
-let s:vim_tags = expand('~/.cache/tags')
-let g:gutentags_cache_dir = s:vim_tags
+" let s:vim_tags = expand('~/.cache/tags')
+" let g:gutentags_cache_dir = s:vim_tags
 " 检测 ~/.cache/tags 不存在就新建 "
-if !isdirectory(s:vim_tags)
-   silent! call mkdir(s:vim_tags, 'p')
-endif
+" if !isdirectory(s:vim_tags)
+   " silent! call mkdir(s:vim_tags, 'p')
+" endif
 
 " 配置 ctags 的参数 "
-let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
-let g:gutentags_ctags_extra_args += ['--c++-kinds=+pxI']
-let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
+" let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
+" let g:gutentags_ctags_extra_args += ['--c++-kinds=+pxI']
+" let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
 
 
 " ===
@@ -321,3 +353,19 @@ let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
 " ===
 autocmd BufEnter * call ncm2#enable_for_buffer()
 set completeopt=noinsert,menuone,noselect
+
+
+" ===
+" === nerdcommenter
+" ===
+"
+" dd spaces after comment delimiters by default
+let g:NERDSpaceDelims = 1
+noremap <silent> <C-c> :call nerdcommenter#Comment(0, 'toggle')<CR>
+
+
+" ===
+" === EditorCofig
+" ===
+let g:EditorConfig_exclude_patterns = ['fugitive://.*']
+let g:EditorConfig_verbose = 1
