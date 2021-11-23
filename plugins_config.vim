@@ -4,7 +4,7 @@
 call plug#begin('$XDG_CONFIG_HOME/nvim/plugged')
 
 Plug 'mileszs/ack.vim'
-Plug 'phpactor/phpactor' ,  {'do': 'composer install', 'for': 'php'}
+"Plug 'phpactor/phpactor' ,  {'do': 'composer install', 'for': 'php'}
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
@@ -12,13 +12,18 @@ Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 Plug 'kevinhwang91/rnvimr'
 
 " Project Plugin
-Plug 'ahmedkhalf/project.nvim'
+"Plug 'ahmedkhalf/project.nvim'
 Plug 'mhinz/vim-startify'
 
 " Taglist
 Plug 'liuchengxu/vista.vim'
+Plug 'preservim/nerdtree'
+Plug 'vim-scripts/taglist.vim'
+
 " Color
 Plug 'kaicataldo/material.vim', { 'branch': 'main' }
+Plug 'mhartington/oceanic-next'
+Plug 'dracula/vim', { 'as': 'dracula' }
 Plug 'theniceboy/nvim-deus'
 
 " Status line
@@ -36,8 +41,10 @@ Plug 'RRethy/vim-illuminate'
 " HTML,JSON,JS,PHP
 Plug 'elzr/vim-json'
 Plug 'pangloss/vim-javascript'
-Plug 'othree/html5.vim'
 Plug 'yuezk/vim-js', { 'for': ['vim-plug', 'php', 'html', 'javascript', 'css', 'less'] }
+
+" PHP Doc
+Plug 'vim-scripts/PDV--phpDocumentor-for-Vim'
 
 Plug 'junegunn/goyo.vim'
 
@@ -45,9 +52,9 @@ Plug 'junegunn/goyo.vim'
 "Plug 'ludovicchabant/vim-gutentags'
 
 " Include Phpactor
-Plug 'ncm2/ncm2'
-Plug 'roxma/nvim-yarp'
-Plug 'phpactor/ncm2-phpactor'
+"Plug 'ncm2/ncm2'
+"Plug 'roxma/nvim-yarp'
+"Plug 'phpactor/ncm2-phpactor'
 " Git
 Plug 'tpope/vim-fugitive'
 
@@ -67,8 +74,6 @@ let g:airline_powerline_fonts = 0
 " === coc.nvim
 " ===
 let g:coc_global_extensions = [
-    \ 'coc-phpactor',
-    \ 'coc-phpls',
 	\ 'coc-docker',
 	\ 'coc-explorer',
 	\ 'coc-gitignore',
@@ -85,6 +90,7 @@ inoremap <silent><expr> <TAB>
 	\ pumvisible() ? "\<C-n>" :
 	\ <SID>check_back_space() ? "\<TAB>" :
 	\ coc#refresh()
+
 inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
 inoremap <expr> <cr> complete_info()["selected"] != "-1" ? "\<C-y>" : "\<C-g>u\<CR>"
 function! s:check_back_space() abort
@@ -176,16 +182,28 @@ function! RipgrepFzf(query, fullscreen)
   call fzf#vim#grep(initial_command, 1, fzf#vim#with_preview(spec), a:fullscreen)
 endfunction
 
+function! RipgrepFzfE(query, fullscreen)
+  let command_fmt = 'rg --column --line-number --no-heading --color=always --smart-case -- %s || true'
+  let initial_command = printf(command_fmt, shellescape(a:query))
+  let reload_command = printf(command_fmt, '{q}')
+  let spec = {'options': ['--exact', '--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command], 'dir': system('git rev-parse --show-toplevel 2> /dev/null')[:-2]}
+  call fzf#vim#grep(initial_command, 1, fzf#vim#with_preview(spec), a:fullscreen)
+endfunction
+
+
 command! -nargs=* -bang PRG call RipgrepFzf(<q-args>, <bang>0)
 
+command! -nargs=* -bang PRGE call RipgrepFzfE(<q-args>, <bang>0)
+
 nnoremap <leader>ff :Leaderf file<CR>
-noremap <silent> <C-p> :ProjectFiles<CR>
+noremap <leader>1 :ProjectFiles<CR>
 noremap <silent> <C-f> :Rg<CR>
 noremap <leader>rg :PRG<CR>
-noremap <silent> <C-e> :History<CR>
+noremap <leader>2 :PRG<CR>
+noremap <leader>3 :PRGE<CR>
+noremap <C-e> :History<CR>
 noremap <leader>bt :BTags<CR>
 noremap <leader>fl :Lines<CR>
-noremap <silent> <C-e> :Buffers<CR>
 noremap <leader>; :History:<CR>
 
 let g:fzf_preview_window = 'right:60%'
@@ -288,7 +306,7 @@ let g:scrollstatus_size = 15
 " ===
 " === fzf-gitignore
 " ===
-noremap <LEADER>gLEADERLEADERi :FzfGitignore<CR>
+noremap <LEADER>g :FzfGitignore<CR>
 
 " ===
 " === xtabline
@@ -304,19 +322,8 @@ noremap \p :echo expand('%:p')<CR>
 " ===
 " === airline
 " ===
-let g:airline_theme = 'material'
+let g:airline_theme = 'oceanicnext'
 
-
-" ===
-" === project
-" ===
-let g:nvim_tree_respect_buf_cwd = 1
-
-lua << EOF
-  require("project_nvim").setup {
-    manual_mode = true
-  }
-EOF
 
 " ===
 " === Goyo
@@ -351,8 +358,8 @@ map <LEADER>gy :Goyo<CR>
 " ===
 " === ncm2
 " ===
-autocmd BufEnter * call ncm2#enable_for_buffer()
-set completeopt=noinsert,menuone,noselect
+"autocmd BufEnter * call ncm2#enable_for_buffer()
+"set completeopt=noinsert,menuone,noselect
 
 
 " ===
@@ -369,3 +376,47 @@ noremap <silent> <C-c> :call nerdcommenter#Comment(0, 'toggle')<CR>
 " ===
 let g:EditorConfig_exclude_patterns = ['fugitive://.*']
 let g:EditorConfig_verbose = 1
+
+
+" ===
+" === Php Doc
+" ===
+inoremap <leader>c <ESC>:call PhpDocSingle()<CR>i
+nnoremap <leader>c :call PhpDocSingle()<CR>
+vnoremap <leader>c :call PhpDocRange()<CR>
+inoremap <C-p> <ESC>:call PhpDocSingle()<CR>i
+nnoremap <C-p> :call PhpDocSingle()<CR>
+vnoremap <C-p> :call PhpDocRange()<CR>
+
+" 关闭自动添加注释.
+autocmd FileType * setl fo-=cro
+autocmd FileType php setl fo-=cro
+
+map <F9>    :NERDTreeToggle<CR>
+map <F10>   :TlistToggle<CR>
+
+
+" taglist
+let Tlist_Auto_Highlight_Tag = 1
+let Tlist_Auto_Open = 0
+let Tlist_Auto_Update = 1
+let Tlist_Close_On_Select = 0
+let Tlist_Compact_Format = 0
+let Tlist_Display_Prototype = 0
+let Tlist_Display_Tag_Scope = 1
+let Tlist_Enable_Fold_Column = 0
+let Tlist_Exit_OnlyWindow=1 "当taglist是最后一个分割窗口时，自动退出vim
+let Tlist_File_Fold_Auto_Close = 0
+let Tlist_GainFocus_On_ToggleOpen = 1
+let Tlist_Hightlight_Tag_On_BufEnter = 1
+let Tlist_Inc_Winwidth = 0
+let Tlist_Max_Submenu_Items = 1
+let Tlist_Max_Tag_Length = 30
+let Tlist_Process_File_Always = 0
+let Tlist_Show_Menu = 0
+let Tlist_Show_One_File = 1
+let Tlist_Sort_Type = "order"
+let Tlist_Use_Horiz_Window = 0
+let Tlist_Use_Right_Window = 1
+let Tlist_WinWidth = 35
+let tlist_php_settings = 'php;c:class;i:interfaces;d:constant;f:function'

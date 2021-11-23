@@ -185,11 +185,6 @@
 				"lintTool": "golint"
 			}
 		},
-        "phplang": {
-            "command": "php",
-            "args": ["/root/.config/php-server/vendor/felixfbecker/language-server/bin/php-language-server.php"],
-            "filetypes": ["php"]
-        },
 		"bash": {
 			"command": "bash-language-server",
 			"args": ["start"],

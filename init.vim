@@ -1,4 +1,5 @@
 set clipboard+=unnamedplus
+
 if !exists('g:vscode')
     " __  ____   __  _   ___     _____ __  __ ____   ____
     "|  \/  \ \ / / | \ | \ \   / /_ _|  \/  |  _ \ / ___|
@@ -52,8 +53,6 @@ if !exists('g:vscode')
     set autochdir
     set autoread
 
-    " 智能缩进
-    set autoindent
     " 显示行号
     set number
     " 过长自动折行
@@ -105,16 +104,27 @@ if !exists('g:vscode')
         set wildignore+=*/.git/*,*/.hg/*,*/.svn/*,*/.DS_Store
     endif
 
+    " 英语拼写检查
+    set spell spelllang=en_us
+    hi clear SpellBad
+    hi SpellBad cterm=underline
+    " Set style for gVim
+    hi SpellBad gui=undercurl
+    " 拼写检查只检查英语单词而忽略中文
+    setlocal spell spelllang=en_us,cjk
+
 
     " =====================
     " === Mapping Setup ===
     " =====================
     " 窗口移动
-    :nnoremap q <c-v>
     map <C-j> <C-W>j
     map <C-k> <C-W>k
     map <C-h> <C-W>h
     map <C-l> <C-W>l
+    :nnoremap q <c-v>
+    nnoremap <C-v> <c-v>
+    inoremap <c-v> <esc>:set paste<cr>a<c-r>=getreg('+')<cr><esc>:set nopaste<cr>mi`[=`]`ia
 
     " 关闭当前 buffer
     map <leader>bd :Bclose<cr>:tabclose<cr>gT
@@ -152,6 +162,8 @@ if !exists('g:vscode')
     map <C-s> :w<CR>
     imap <C-s> <C-o>:w<CR>
 
+    noremap <leader>z zf%
+
     " =====================
     " === Plugins Setup ===
     " =====================
@@ -161,12 +173,13 @@ if !exists('g:vscode')
     " =====================
     " === UI Setup      ===
     " =====================
-    colorscheme material
+    syntax enable
+    colorscheme dracula
     if (has('termguicolors'))
       set termguicolors
     endif
     "let g:material_theme_style = 'ocean' | 'lighter' | 'darker' | 'default-community' | 'palenight-community' | 'ocean-community' | 'lighter-community' | 'darker-community'
-    let g:material_theme_style = 'default'
+    let g:material_theme_style = 'palenight-community'
     let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 else
     xnoremap <C-c> <Cmd>call VSCodeNotify('editor.action.clipboardCopyAction')<CR>
@@ -174,3 +187,8 @@ else
     nnoremap <C-v> <Cmd>call VSCodeNotify('editor.action.clipboardPasteAction')<CR>
     noremap <C-v> <Cmd>call VSCodeNotify('editor.action.clipboardPasteAction')<CR>
 endif
+
+
+" 智能缩进
+set autoindent
+set smartindent
